@@ -15,7 +15,6 @@ import hudson.tasks.Builder;
 import hudson.tasks.Shell;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.FormValidation;
-import hudson.util.VariableResolver;
 
 import java.io.IOException;
 import java.util.ArrayList;
