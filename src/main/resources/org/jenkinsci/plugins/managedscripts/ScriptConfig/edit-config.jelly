@@ -25,38 +25,70 @@ THE SOFTWARE.
 
 
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
-	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-			   		
-			   		<p>
-			   		 ${%description}
-			   		</p>
-			   		
-					<f:entry title="${%ID}" >
-						<f:textbox readonly="readonly" name="config.id" value="${config.id}" />
-					</f:entry>
-					<f:entry title="${%Name}">
-						<f:textbox name="config.name" value="${config.name}" />
-					</f:entry>
-					<f:entry title="${%Comment}">
-						<f:textbox name="config.comment" value="${config.comment}" />
-					</f:entry>
-					<f:block>
-					  <table>
-					      <f:entry title="${%Argument list}" field="config.args">
-								<f:repeatable var="arg" items="${config.args}" name="args" noAddButton="true" minimum="1">
-									<table width="100%">
-										<f:entry>
-											<input type="text" name="name" value="${arg.name}" size="40" />
-											<input type="button" name="delete_button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
-											<input type="button" name="add_button" value="${%Add argument}" class="repeatable-add show-if-last" />
-										</f:entry>
-									</table>
-								</f:repeatable>
-						</f:entry>
-					  </table>
-					</f:block>					
-					<f:entry title="${%Content}">
-						<f:textarea id="config.content" name="config.content" value="${config.content}" /> 
-					</f:entry>
-					
+         xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+    <p>
+        ${%description}
+    </p>
+
+    <f:entry title="${%ID}" >
+        <f:textbox readonly="readonly" name="config.id" value="${config.id}" />
+    </f:entry>
+    <f:entry title="${%Name}">
+        <f:textbox name="config.name" value="${config.name}" />
+    </f:entry>
+    <f:entry title="${%Comment}">
+        <f:textbox name="config.comment" value="${config.comment}" />
+    </f:entry>
+    <f:block>
+        <table>
+            <f:entry title="${%Argument list}" field="config.args">
+                <f:repeatable var="arg" items="${config.args}" name="args" noAddButton="true" minimum="1">
+                    <table width="100%">
+                        <f:entry>
+                            <input type="text" name="name" value="${arg.name}" size="40" />
+                            <input type="button" name="delete_button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
+                            <input type="button" name="add_button" value="${%Add argument}" class="repeatable-add show-if-last" />
+                        </f:entry>
+                    </table>
+                </f:repeatable>
+            </f:entry>
+        </table>
+    </f:block>
+    <f:entry title="${%Content}">
+        <f:textarea id="config.content" name="config.content" value="${config.content}" />
+        <st:adjunct includes="org.kohsuke.stapler.codemirror.mode.python.python,
+                            org.kohsuke.stapler.codemirror.mode.shell.shell,
+                            org.kohsuke.stapler.codemirror.mode.perl.perl,
+                            "/>
+        <script>
+            document.onreadystatechange = function(){
+                // editor.on seems to require newer codemirror version
+                // var pending;
+                // editor.on("change", function() {
+                //      clearTimeout(pending);
+                //      pending = setTimeout(update, 400);
+                //  });
+                function looksLike(code) {
+                    var firstline = code.split('\n')[0];
+                    if(firstline.indexOf('#!') == 0){
+                        var shellpattern = /bin\/[\w]{0,2}sh/;
+                        var shellpatternwin = /[\w]{0,2}sh\.exe/;
+                        if(firstline.indexOf('python') > -1){
+                            return "python";
+                        // perl requires stapler-adjunct-codemirror > 1.3
+                        }else if(firstline.indexOf('perl') > -1){
+                            return "perl";
+                        }else if(shellpattern.exec(firstline) || shellpatternwin.exec(firstline)){
+                            return "shell";
+                        }
+                    }
+                }
+                function update() {
+                    editor.setOption("mode", looksLike(editor.getValue()));
+                }
+                update();
+            };
+        </script>
+    </f:entry>
 </j:jelly>
