@@ -34,6 +34,9 @@
 				<f:block>
 					<table name="scriptBuildStepArgs" id="scriptBuildStepArgs">
 						<f:optionalBlock name="defineArgs" inline="true" title="${%Define arguments}" checked="${!empty(instance.buildStepArgs)}" help="/plugin/managed-scripts/help-defineArgs.html">
+                            <f:entry field="tokenized">
+                                <f:checkbox title="${%Tokenized}" checked="${instance.isTokenized()}" />
+                            </f:entry>                        
 							<f:entry>
 								<f:repeatable var="arg" items="${instance.buildStepArgs}" name="buildStepArgs" noAddButton="true" minimum="1">
 									<table width="100%">

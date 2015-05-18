@@ -49,10 +49,11 @@ import org.kohsuke.stapler.bind.JavaScriptMethod;
  */
 public class ScriptBuildStep extends Builder {
 
-    private static Logger log = Logger.getLogger(ScriptBuildStep.class.getName());
+    private static Logger  log = Logger.getLogger(ScriptBuildStep.class.getName());
 
-    private final String buildStepId;
+    private final String   buildStepId;
     private final String[] buildStepArgs;
+    private final boolean  tokenized;
 
     public static class ArgValue {
         public final String arg;
@@ -64,14 +65,15 @@ public class ScriptBuildStep extends Builder {
     }
 
     public static class ScriptBuildStepArgs {
-        public final boolean defineArgs;
+        public final boolean    defineArgs;
         public final ArgValue[] buildStepArgs;
+        public final boolean    tokenized;
 
         @DataBoundConstructor
-        public ScriptBuildStepArgs(boolean defineArgs, ArgValue[] buildStepArgs)
-        {
+        public ScriptBuildStepArgs(boolean defineArgs, ArgValue[] buildStepArgs, boolean tokenized) {
             this.defineArgs = defineArgs;
             this.buildStepArgs = buildStepArgs;
+            this.tokenized = tokenized;
         }
     }
 
@@ -84,12 +86,11 @@ public class ScriptBuildStep extends Builder {
      *            whether to save the args and arg values (the boolean is required because of html form submission, which also sends hidden values)
      */
     @DataBoundConstructor
-    public ScriptBuildStep(String buildStepId, ScriptBuildStepArgs scriptBuildStepArgs)
-    {
+    public ScriptBuildStep(String buildStepId, ScriptBuildStepArgs scriptBuildStepArgs) {
         this.buildStepId = buildStepId;
+        this.tokenized = scriptBuildStepArgs.tokenized;
         List<String> l = null;
-        if (scriptBuildStepArgs != null && scriptBuildStepArgs.defineArgs
-                && scriptBuildStepArgs.buildStepArgs != null) {
+        if (scriptBuildStepArgs != null && scriptBuildStepArgs.defineArgs && scriptBuildStepArgs.buildStepArgs != null) {
             l = new ArrayList<String>();
             for (ArgValue arg : scriptBuildStepArgs.buildStepArgs) {
                 l.add(arg.arg);
@@ -101,6 +102,7 @@ public class ScriptBuildStep extends Builder {
     public ScriptBuildStep(String buildStepId, String[] buildStepArgs) {
         this.buildStepId = buildStepId;
         this.buildStepArgs = buildStepArgs;
+        this.tokenized = false;
     }
 
     public String getBuildStepId() {
@@ -109,6 +111,10 @@ public class ScriptBuildStep extends Builder {
 
     public String[] getBuildStepArgs() {
         return buildStepArgs;
+    }
+
+    public boolean isTokenized() {
+        return tokenized;
     }
 
     /**
@@ -166,7 +172,12 @@ public class ScriptBuildStep extends Builder {
             // Add additional parameters set by user
             if (buildStepArgs != null) {
                 for (String arg : buildStepArgs) {
-                    args.add(TokenMacro.expandAll(build, listener, arg, false, null));
+                    final String expanded = TokenMacro.expandAll(build, listener, arg, false, null);
+                    if (tokenized) {
+                        args.addTokenized(expanded);
+                    } else {
+                        args.add(expanded);
+                    }
                 }
             }
 
