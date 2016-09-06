@@ -3,6 +3,7 @@
  */
 package org.jenkinsci.plugins.managedscripts;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 
 import java.util.ArrayList;
@@ -67,6 +68,12 @@ public class WinBatchConfig extends Config {
         @Override
         public Config newConfig() {
             String id = getProviderId() + System.currentTimeMillis();
+            return new WinBatchConfig(id, "Build Step", "", "echo hello", null);
+        }
+
+        @NonNull
+        @Override
+        public Config newConfig(@NonNull String id) {
             return new WinBatchConfig(id, "Build Step", "", "echo hello", null);
         }
 

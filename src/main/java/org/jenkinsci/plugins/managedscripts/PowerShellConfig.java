@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.managedscripts;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import org.jenkinsci.lib.configprovider.AbstractConfigProviderImpl;
 import org.jenkinsci.lib.configprovider.model.Config;
@@ -62,6 +63,11 @@ public class PowerShellConfig extends Config {
           return new PowerShellConfig(id, "Build Step", "", "Write-Host \"hello\";", null);
       }
 
+      @NonNull
+      @Override
+      public Config newConfig(@NonNull String id) {
+          return new PowerShellConfig(id, "Build Step", "", "Write-Host \"hello\";", null);
+      }
   }
 
 }
