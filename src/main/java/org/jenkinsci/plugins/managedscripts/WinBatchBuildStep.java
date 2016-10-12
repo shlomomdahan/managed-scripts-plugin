@@ -3,7 +3,8 @@ package org.jenkinsci.plugins.managedscripts;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.FilePath;
-import hudson.model.AbstractProject;
+import hudson.Launcher;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.tasks.CommandInterpreter;
@@ -17,9 +18,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
+import hudson.util.ListBoxModel;
 import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.managedscripts.WinBatchConfig.Arg;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.bind.JavaScriptMethod;
@@ -34,6 +37,7 @@ import org.kohsuke.stapler.bind.JavaScriptMethod;
 public class WinBatchBuildStep extends CommandInterpreter {
 
     private final String[] buildStepArgs;
+    private String content;
 
     public static class ArgValue {
         public final String arg;
@@ -49,19 +53,17 @@ public class WinBatchBuildStep extends CommandInterpreter {
         public final ArgValue[] buildStepArgs;
 
         @DataBoundConstructor
-        public ScriptBuildStepArgs(boolean defineArgs, ArgValue[] buildStepArgs)
-        {
+        public ScriptBuildStepArgs(boolean defineArgs, ArgValue[] buildStepArgs) {
             this.defineArgs = defineArgs;
             this.buildStepArgs = buildStepArgs;
         }
     }
+
     /**
      * The constructor used at form submission
      *
-     * @param buildStepId
-     *            the Id of the config file
-     * @param scriptBuildStepArgs
-     *            whether to save the args and arg values (the boolean is required because of html form submission, which also sends hidden values)
+     * @param buildStepId         the Id of the config file
+     * @param scriptBuildStepArgs whether to save the args and arg values (the boolean is required because of html form submission, which also sends hidden values)
      */
     @DataBoundConstructor
     public WinBatchBuildStep(String buildStepId, ScriptBuildStepArgs scriptBuildStepArgs) {
@@ -80,10 +82,8 @@ public class WinBatchBuildStep extends CommandInterpreter {
     /**
      * The constructor
      *
-     * @param buildStepId
-     *            the Id of the config file
-     * @param buildStepArgs
-     *            list of arguments specified as buildStepargs
+     * @param buildStepId   the Id of the config file
+     * @param buildStepArgs list of arguments specified as buildStepargs
      */
     public WinBatchBuildStep(String buildStepId, String[] buildStepArgs) {
         super(buildStepId); // save buildStepId as command
@@ -120,7 +120,10 @@ public class WinBatchBuildStep extends CommandInterpreter {
 
     @Override
     protected String getContents() {
-        Config buildStepConfig = getDescriptor().getBuildStepConfigById(getBuildStepId());
+
+        Queue.Executable currentExecutable = Executor.currentExecutor().getCurrentExecutable();
+
+        Config buildStepConfig = Config.getByIdOrNull((Run<?, ?>) currentExecutable, getBuildStepId());
         if (buildStepConfig == null) {
             throw new IllegalStateException(Messages.config_does_not_exist(getBuildStepId()));
         }
@@ -166,37 +169,30 @@ public class WinBatchBuildStep extends CommandInterpreter {
          *
          * @return A collection of batch files of type {@link WinBatchConfig}.
          */
-        public Collection<Config> getAvailableBuildTemplates() {
-            List<Config> allConfigs = new ArrayList<Config>(getBuildStepConfigProvider().getAllConfigs());
-            Collections.sort(allConfigs, new Comparator<Config>() {
+        public ListBoxModel doFillBuildStepIdItems(@AncestorInPath ItemGroup context) {
+            List<Config> configsInContext = Config.getConfigsInContext(context, WinBatchConfig.WinBatchConfigProvider.class);
+            Collections.sort(configsInContext, new Comparator<Config>() {
                 public int compare(Config o1, Config o2) {
                     return o1.name.compareTo(o2.name);
                 }
             });
-            return allConfigs;
-        }
-
-        /**
-         * Returns a Config object for a given config file Id.
-         *
-         * @param id
-         *            The Id of a config file.
-         * @return If Id can be found a Config object that represents the given Id is returned. Otherwise null.
-         */
-        public WinBatchConfig getBuildStepConfigById(String id) {
-            return (WinBatchConfig) getBuildStepConfigProvider().getConfigById(id);
+            ListBoxModel items = new ListBoxModel();
+            items.add("please select", "");
+            for (Config config : configsInContext) {
+                items.add(config.name, config.id);
+            }
+            return items;
         }
 
         /**
          * gets the argument description to be displayed on the screen when selecting a config in the dropdown
          *
-         * @param configId
-         *            the config id to get the arguments description for
+         * @param configId the config id to get the arguments description for
          * @return the description
          */
         @JavaScriptMethod
-        public String getArgsDescription(String configId) {
-            final WinBatchConfig config = getBuildStepConfigById(configId);
+        public String getArgsDescription(@AncestorInPath ItemGroup context, String configId) {
+            final WinBatchConfig config = Config.getByIdOrNull(context, configId);
             if (config != null) {
                 if (config.args != null && !config.args.isEmpty()) {
                     StringBuilder sb = new StringBuilder("Required arguments: ");
@@ -217,20 +213,19 @@ public class WinBatchBuildStep extends CommandInterpreter {
         }
 
         @JavaScriptMethod
-        public List<Arg> getArgs(String configId) {
-            final WinBatchConfig config = getBuildStepConfigById(configId);
+        public List<Arg> getArgs(@AncestorInPath ItemGroup context, String configId) {
+            final WinBatchConfig config = Config.getByIdOrNull(context, configId);
             return config.args;
         }
 
         /**
          * validate that an existing config was chosen
          *
-         * @param value
-         *            the configId
+         * @param buildStepId the buildStepId
          * @return
          */
-        public FormValidation doCheckBuildStepId(@QueryParameter String buildStepId) {
-            final WinBatchConfig config = getBuildStepConfigById(buildStepId);
+        public FormValidation doCheckBuildStepId(@AncestorInPath ItemGroup context, @QueryParameter String buildStepId) {
+            final WinBatchConfig config = Config.getByIdOrNull(context, buildStepId);
             if (config != null) {
                 return FormValidation.ok();
             } else {

@@ -6,10 +6,7 @@ import hudson.ExtensionList;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
-import hudson.model.BuildListener;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.Computer;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.tasks.Shell;
@@ -26,6 +23,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
 import org.jenkinsci.lib.configprovider.ConfigProvider;
@@ -33,6 +31,7 @@ import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.managedscripts.ScriptConfig.Arg;
 import org.jenkinsci.plugins.managedscripts.ScriptConfig.ScriptConfigProvider;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.bind.JavaScriptMethod;
@@ -49,11 +48,11 @@ import org.kohsuke.stapler.bind.JavaScriptMethod;
  */
 public class ScriptBuildStep extends Builder {
 
-    private static Logger  log = Logger.getLogger(ScriptBuildStep.class.getName());
+    private static Logger log = Logger.getLogger(ScriptBuildStep.class.getName());
 
-    private final String   buildStepId;
+    private final String buildStepId;
     private final String[] buildStepArgs;
-    private final boolean  tokenized;
+    private final boolean tokenized;
 
     public static class ArgValue {
         public final String arg;
@@ -65,9 +64,9 @@ public class ScriptBuildStep extends Builder {
     }
 
     public static class ScriptBuildStepArgs {
-        public final boolean    defineArgs;
+        public final boolean defineArgs;
         public final ArgValue[] buildStepArgs;
-        public final boolean    tokenized;
+        public final boolean tokenized;
 
         @DataBoundConstructor
         public ScriptBuildStepArgs(boolean defineArgs, ArgValue[] buildStepArgs, boolean tokenized) {
@@ -80,10 +79,8 @@ public class ScriptBuildStep extends Builder {
     /**
      * The constructor used at form submission
      *
-     * @param buildStepId
-     *            the Id of the config file
-     * @param scriptBuildStepArgs
-     *            whether to save the args and arg values (the boolean is required because of html form submission, which also sends hidden values)
+     * @param buildStepId         the Id of the config file
+     * @param scriptBuildStepArgs whether to save the args and arg values (the boolean is required because of html form submission, which also sends hidden values)
      */
     @DataBoundConstructor
     public ScriptBuildStep(String buildStepId, ScriptBuildStepArgs scriptBuildStepArgs) {
@@ -126,7 +123,7 @@ public class ScriptBuildStep extends Builder {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         boolean returnValue = true;
-        Config buildStepConfig = getDescriptor().getBuildStepConfigById(buildStepId);
+        Config buildStepConfig = Config.getByIdOrNull(build, buildStepId);
         if (buildStepConfig == null) {
             listener.getLogger().println(Messages.config_does_not_exist(buildStepId));
             return false;
@@ -242,37 +239,33 @@ public class ScriptBuildStep extends Builder {
          *
          * @return A collection of config files of type {@link ScriptConfig}.
          */
-        public Collection<Config> getAvailableBuildTemplates() {
-            List<Config> allConfigs = new ArrayList<Config>(getBuildStepConfigProvider().getAllConfigs());
-            Collections.sort(allConfigs, new Comparator<Config>() {
+        public ListBoxModel doFillBuildStepIdItems(@AncestorInPath ItemGroup context) {
+            List<Config> configsInContext = Config.getConfigsInContext(context, ScriptConfigProvider.class);
+            Collections.sort(configsInContext, new Comparator<Config>() {
                 public int compare(Config o1, Config o2) {
                     return o1.name.compareTo(o2.name);
                 }
             });
-            return allConfigs;
+
+            ListBoxModel items = new ListBoxModel();
+            items.add("please select", "");
+            for (Config config : configsInContext) {
+                items.add(config.name, config.id);
+            }
+            return items;
         }
 
-        /**
-         * Returns a Config object for a given config file Id.
-         *
-         * @param id
-         *            The Id of a config file.
-         * @return If Id can be found a Config object that represents the given Id is returned. Otherwise null.
-         */
-        public ScriptConfig getBuildStepConfigById(String id) {
-            return (ScriptConfig) getBuildStepConfigProvider().getConfigById(id);
-        }
+
 
         /**
          * gets the argument description to be displayed on the screen when selecting a config in the dropdown
          *
-         * @param configId
-         *            the config id to get the arguments description for
+         * @param configId the config id to get the arguments description for
          * @return the description
          */
         @JavaScriptMethod
-        public String getArgsDescription(String configId) {
-            final ScriptConfig config = getBuildStepConfigById(configId);
+        public String getArgsDescription(@AncestorInPath ItemGroup context, String configId) {
+            final ScriptConfig config = Config.getByIdOrNull(context, configId);
             if (config != null) {
                 if (config.args != null && !config.args.isEmpty()) {
                     StringBuilder sb = new StringBuilder("Required arguments: ");
@@ -293,20 +286,23 @@ public class ScriptBuildStep extends Builder {
         }
 
         @JavaScriptMethod
-        public List<Arg> getArgs(String configId) {
-            final ScriptConfig config = getBuildStepConfigById(configId);
-            return config.args;
+        public List<Arg> getArgs(@AncestorInPath ItemGroup context, String configId) {
+            final ScriptConfig config = Config.getByIdOrNull(context, configId);
+            if (config != null) {
+                return config.args;
+            }
+            return Collections.emptyList();
         }
 
         /**
          * validate that an existing config was chosen
          *
-         * @param value
-         *            the configId
-         * @return
+         * @param context     the context to search within for the configuration file with the given id
+         * @param buildStepId the buildStepId
+         * @return whether the config existts or not
          */
-        public FormValidation doCheckBuildStepId(@QueryParameter String buildStepId) {
-            final ScriptConfig config = getBuildStepConfigById(buildStepId);
+        public FormValidation doCheckBuildStepId(@AncestorInPath ItemGroup context, @QueryParameter String buildStepId) {
+            final ScriptConfig config = Config.getByIdOrNull(context, buildStepId);
             if (config != null) {
                 return FormValidation.ok();
             } else {
@@ -314,10 +310,6 @@ public class ScriptBuildStep extends Builder {
             }
         }
 
-        private ConfigProvider getBuildStepConfigProvider() {
-            ExtensionList<ConfigProvider> providers = ConfigProvider.all();
-            return providers.get(ScriptConfigProvider.class);
-        }
 
     }
 }

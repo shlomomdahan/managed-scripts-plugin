@@ -9,7 +9,9 @@ import hudson.Extension;
 import java.util.ArrayList;
 import java.util.List;
 
+import jenkins.model.Jenkins;
 import org.jenkinsci.lib.configprovider.AbstractConfigProviderImpl;
+import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -37,6 +39,11 @@ public class WinBatchConfig extends Config {
         } else {
             this.args = null;
         }
+    }
+
+    @Override
+    public ConfigProvider getDescriptor() {
+        return Jenkins.getInstance().getDescriptorByType(WinBatchConfigProvider.class);
     }
 
     public static class Arg {
@@ -76,6 +83,7 @@ public class WinBatchConfig extends Config {
         public Config newConfig(@NonNull String id) {
             return new WinBatchConfig(id, "Build Step", "", "echo hello", null);
         }
+
 
     }
 

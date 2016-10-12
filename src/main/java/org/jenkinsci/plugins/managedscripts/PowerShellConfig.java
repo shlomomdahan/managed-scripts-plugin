@@ -2,9 +2,12 @@ package org.jenkinsci.plugins.managedscripts;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
+import jenkins.model.Jenkins;
 import org.jenkinsci.lib.configprovider.AbstractConfigProviderImpl;
+import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
+import org.jenkinsci.plugins.configfiles.custom.CustomConfig;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.ArrayList;
@@ -30,6 +33,11 @@ public class PowerShellConfig extends Config {
           this.args = null;
       }
   }
+
+    @Override
+    public ConfigProvider getDescriptor() {
+        return Jenkins.getInstance().getDescriptorByType(PowerShellConfigProvider.class);
+    }
 
   public static class Arg {
       public final String name;

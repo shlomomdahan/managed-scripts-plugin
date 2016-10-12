@@ -12,8 +12,10 @@ import java.util.List;
 import jenkins.model.Jenkins;
 
 import org.jenkinsci.lib.configprovider.AbstractConfigProviderImpl;
+import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
+import org.jenkinsci.plugins.configfiles.maven.MavenSettingsConfig;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -39,6 +41,11 @@ public class ScriptConfig extends Config {
         } else {
             this.args = null;
         }
+    }
+
+    @Override
+    public ConfigProvider getDescriptor() {
+        return Jenkins.getInstance().getDescriptorByType(ScriptConfigProvider.class);
     }
 
     public static class Arg {
@@ -88,10 +95,6 @@ public class ScriptConfig extends Config {
         // start stuff for backward compatibility
         protected transient String ID_PREFIX;
 
-        @Override
-        public boolean isResponsibleFor(String configId) {
-            return super.isResponsibleFor(configId) || configId.startsWith("ScriptBuildStepConfigProvider.");
-        }
 
         static {
             Jenkins.XSTREAM.alias("org.jenkinsci.plugins.managedscripts.ScriptBuildStepConfigProvider", ScriptConfigProvider.class);
