@@ -6,6 +6,7 @@ package org.jenkinsci.plugins.managedscripts;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,10 +44,10 @@ public class WinBatchConfig extends Config {
 
     @Override
     public ConfigProvider getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(WinBatchConfigProvider.class);
+        return Jenkins.getActiveInstance().getDescriptorByType(WinBatchConfigProvider.class);
     }
 
-    public static class Arg {
+    public static class Arg implements Serializable {
         public final String name;
 
         @DataBoundConstructor

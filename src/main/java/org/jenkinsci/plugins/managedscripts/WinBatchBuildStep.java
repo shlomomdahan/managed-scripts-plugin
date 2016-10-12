@@ -1,21 +1,15 @@
 package org.jenkinsci.plugins.managedscripts;
 
-import hudson.Extension;
-import hudson.ExtensionList;
-import hudson.FilePath;
-import hudson.Launcher;
+import hudson.*;
 import hudson.model.*;
+import hudson.model.Queue;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.tasks.CommandInterpreter;
 import hudson.util.FormValidation;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import hudson.util.ListBoxModel;
@@ -36,6 +30,8 @@ import org.kohsuke.stapler.bind.JavaScriptMethod;
  */
 public class WinBatchBuildStep extends CommandInterpreter {
 
+    private static final Logger LOGGER = Logger.getLogger(PowerShellBuildStep.class.getName());
+
     private final String[] buildStepArgs;
     private String content;
 
@@ -55,7 +51,7 @@ public class WinBatchBuildStep extends CommandInterpreter {
         @DataBoundConstructor
         public ScriptBuildStepArgs(boolean defineArgs, ArgValue[] buildStepArgs) {
             this.defineArgs = defineArgs;
-            this.buildStepArgs = buildStepArgs;
+            this.buildStepArgs = buildStepArgs == null ? new ArgValue[0] : Arrays.copyOf(buildStepArgs, buildStepArgs.length);
         }
     }
 
@@ -87,7 +83,7 @@ public class WinBatchBuildStep extends CommandInterpreter {
      */
     public WinBatchBuildStep(String buildStepId, String[] buildStepArgs) {
         super(buildStepId); // save buildStepId as command
-        this.buildStepArgs = buildStepArgs;
+        this.buildStepArgs = buildStepArgs == null ? new String[0] : Arrays.copyOf(buildStepArgs, buildStepArgs.length);
     }
 
     public String getBuildStepId() {
@@ -95,7 +91,8 @@ public class WinBatchBuildStep extends CommandInterpreter {
     }
 
     public String[] getBuildStepArgs() {
-        return buildStepArgs;
+        String[] args = buildStepArgs == null ? new String[0] : buildStepArgs;
+        return Arrays.copyOf(args, args.length);
     }
 
     @Override
@@ -121,13 +118,26 @@ public class WinBatchBuildStep extends CommandInterpreter {
     @Override
     protected String getContents() {
 
-        Queue.Executable currentExecutable = Executor.currentExecutor().getCurrentExecutable();
-
-        Config buildStepConfig = Config.getByIdOrNull((Run<?, ?>) currentExecutable, getBuildStepId());
-        if (buildStepConfig == null) {
-            throw new IllegalStateException(Messages.config_does_not_exist(getBuildStepId()));
+        Executor executor = Executor.currentExecutor();
+        if(executor!=null) {
+            Queue.Executable currentExecutable = executor.getCurrentExecutable();
+            if(currentExecutable != null) {
+                Config buildStepConfig = Config.getByIdOrNull((Run<?, ?>) currentExecutable, getBuildStepId());
+                if (buildStepConfig == null) {
+                    throw new IllegalStateException(Messages.config_does_not_exist(getBuildStepId()));
+                }
+                return buildStepConfig.content + "\r\nexit %ERRORLEVEL%";
+            } else {
+                String msg = "current executable not accessable! can't get content of script: "+getBuildStepId();
+                LOGGER.log(Level.SEVERE, msg);
+                throw new RuntimeException(msg);
+            }
+        } else {
+            String msg = "current executor not accessable! can't get content of script: "+getBuildStepId();
+            LOGGER.log(Level.SEVERE, msg);
+            throw new RuntimeException(msg);
         }
-        return buildStepConfig.content + "\r\nexit %ERRORLEVEL%";
+
     }
 
     @Override

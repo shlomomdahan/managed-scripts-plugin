@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.managedscripts;
 
 import hudson.EnvVars;
 import hudson.Extension;
-import hudson.ExtensionList;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
@@ -14,19 +13,13 @@ import hudson.util.ArgumentListBuilder;
 import hudson.util.FormValidation;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
-import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.managedscripts.ScriptConfig.Arg;
 import org.jenkinsci.plugins.managedscripts.ScriptConfig.ScriptConfigProvider;
@@ -48,7 +41,7 @@ import org.kohsuke.stapler.bind.JavaScriptMethod;
  */
 public class ScriptBuildStep extends Builder {
 
-    private static Logger log = Logger.getLogger(ScriptBuildStep.class.getName());
+    private static Logger LOGGER = Logger.getLogger(ScriptBuildStep.class.getName());
 
     private final String buildStepId;
     private final String[] buildStepArgs;
@@ -71,7 +64,7 @@ public class ScriptBuildStep extends Builder {
         @DataBoundConstructor
         public ScriptBuildStepArgs(boolean defineArgs, ArgValue[] buildStepArgs, boolean tokenized) {
             this.defineArgs = defineArgs;
-            this.buildStepArgs = buildStepArgs;
+            this.buildStepArgs = buildStepArgs == null ? new ArgValue[0] : Arrays.copyOf(buildStepArgs, buildStepArgs.length);
             this.tokenized = tokenized;
         }
     }
@@ -85,9 +78,9 @@ public class ScriptBuildStep extends Builder {
     @DataBoundConstructor
     public ScriptBuildStep(String buildStepId, ScriptBuildStepArgs scriptBuildStepArgs) {
         this.buildStepId = buildStepId;
-        this.tokenized = scriptBuildStepArgs.tokenized;
+        this.tokenized = scriptBuildStepArgs != null ? scriptBuildStepArgs.tokenized : false;
         List<String> l = null;
-        if (scriptBuildStepArgs != null && scriptBuildStepArgs.defineArgs && scriptBuildStepArgs.buildStepArgs != null) {
+        if (scriptBuildStepArgs != null && scriptBuildStepArgs.defineArgs && scriptBuildStepArgs.buildStepArgs != null){
             l = new ArrayList<String>();
             for (ArgValue arg : scriptBuildStepArgs.buildStepArgs) {
                 l.add(arg.arg);
@@ -98,7 +91,7 @@ public class ScriptBuildStep extends Builder {
 
     public ScriptBuildStep(String buildStepId, String[] buildStepArgs) {
         this.buildStepId = buildStepId;
-        this.buildStepArgs = buildStepArgs;
+        this.buildStepArgs = buildStepArgs == null ? new String[0] : Arrays.copyOf(buildStepArgs, buildStepArgs.length);
         this.tokenized = false;
     }
 
@@ -107,7 +100,8 @@ public class ScriptBuildStep extends Builder {
     }
 
     public String[] getBuildStepArgs() {
-        return buildStepArgs;
+        String[] args = buildStepArgs == null ? new String[0] : buildStepArgs;
+        return Arrays.copyOf(args, args.length);
     }
 
     public boolean isTokenized() {
@@ -135,54 +129,59 @@ public class ScriptBuildStep extends Builder {
             EnvVars env = build.getEnvironment(listener);
             String data = buildStepConfig.content;
 
-            /*
-             * Copying temporary file to remote execution host
-             */
-            dest = workingDir.createTextTempFile("build_step_template", ".sh", data, false);
-            log.log(Level.FINE, "Wrote script to " + Computer.currentComputer().getDisplayName() + ":" + dest.getRemote());
+            if(workingDir != null) {
+                /*
+                 * Copying temporary file to remote execution host
+                 */
+                    dest = workingDir.createTextTempFile("build_step_template", ".sh", data, false);
+                    LOGGER.log(Level.FINE, "Wrote script to " + Computer.currentComputer().getDisplayName() + ":" + dest.getRemote());
 
-            /*
-             * Analyze interpreter line (and use the desired interpreter)
-             */
-            ArgumentListBuilder args = new ArgumentListBuilder();
-            if (data.startsWith("#!")) {
-                String interpreterLine = data.substring(2, data.indexOf("\n"));
-                String[] interpreterElements = interpreterLine.split("\\s+");
-                // Add interpreter to arguments list
-                String interpreter = interpreterElements[0];
-                args.add(interpreter);
-                log.log(Level.FINE, "Using custom interpreter: " + interpreterLine);
-                // Add addition parameter to arguments list
-                for (int i = 1; i < interpreterElements.length; i++) {
-                    args.add(interpreterElements[i]);
+                /*
+                 * Analyze interpreter line (and use the desired interpreter)
+                 */
+                ArgumentListBuilder args = new ArgumentListBuilder();
+                if (data.startsWith("#!")) {
+                    String interpreterLine = data.substring(2, data.indexOf("\n"));
+                    String[] interpreterElements = interpreterLine.split("\\s+");
+                    // Add interpreter to arguments list
+                    String interpreter = interpreterElements[0];
+                    args.add(interpreter);
+                    LOGGER.log(Level.FINE, "Using custom interpreter: " + interpreterLine);
+                    // Add addition parameter to arguments list
+                    for (int i = 1; i < interpreterElements.length; i++) {
+                        args.add(interpreterElements[i]);
+                    }
+                } else {
+                    // the shell executable is already configured for the Shell
+                    // task, reuse it
+                    final Shell.DescriptorImpl shellDescriptor = (Shell.DescriptorImpl) Jenkins.getActiveInstance().getDescriptor(Shell.class);
+                    final String interpreter = shellDescriptor.getShellOrDefault(workingDir.getChannel());
+                    args.add(interpreter);
                 }
-            } else {
-                // the shell executable is already configured for the Shell
-                // task, reuse it
-                final Shell.DescriptorImpl shellDescriptor = (Shell.DescriptorImpl) Jenkins.getInstance().getDescriptor(Shell.class);
-                final String interpreter = shellDescriptor.getShellOrDefault(workingDir.getChannel());
-                args.add(interpreter);
-            }
 
-            args.add(dest.getRemote());
+                args.add(dest.getRemote());
 
-            // Add additional parameters set by user
-            if (buildStepArgs != null) {
-                for (String arg : buildStepArgs) {
-                    final String expanded = TokenMacro.expandAll(build, listener, arg, false, null);
-                    if (tokenized) {
-                        args.addTokenized(expanded);
-                    } else {
-                        args.add(expanded);
+                // Add additional parameters set by user
+                if (buildStepArgs != null) {
+                    for (String arg : buildStepArgs) {
+                        final String expanded = TokenMacro.expandAll(build, listener, arg, false, null);
+                        if (tokenized) {
+                            args.addTokenized(expanded);
+                        } else {
+                            args.add(expanded);
+                        }
                     }
                 }
-            }
 
             /*
              * Execute command remotely
              */
-            int r = launcher.launch().cmds(args).envs(env).stderr(listener.getLogger()).stdout(listener.getLogger()).pwd(workingDir).join();
-            returnValue = (r == 0);
+                int r = launcher.launch().cmds(args).envs(env).stderr(listener.getLogger()).stdout(listener.getLogger()).pwd(workingDir).join();
+                returnValue = (r == 0);
+            } else {
+                LOGGER.log(Level.SEVERE, "no workspace precent, cant run script!");
+                returnValue = false;
+            }
 
         } catch (IOException e) {
             Util.displayIOException(e, listener);
@@ -201,7 +200,7 @@ public class ScriptBuildStep extends Builder {
                 returnValue = false;
             }
         }
-        log.log(Level.FINE, "Finished script step");
+        LOGGER.log(Level.FINE, "Finished script step");
         return returnValue;
     }
 

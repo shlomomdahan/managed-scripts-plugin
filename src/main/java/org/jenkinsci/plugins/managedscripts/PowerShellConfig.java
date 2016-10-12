@@ -10,8 +10,10 @@ import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.jenkinsci.plugins.configfiles.custom.CustomConfig;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class PowerShellConfig extends Config {
 
@@ -36,10 +38,10 @@ public class PowerShellConfig extends Config {
 
     @Override
     public ConfigProvider getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(PowerShellConfigProvider.class);
+        return Jenkins.getActiveInstance().getDescriptorByType(PowerShellConfigProvider.class);
     }
 
-  public static class Arg {
+  public static class Arg implements Serializable {
       public final String name;
 
       @DataBoundConstructor
