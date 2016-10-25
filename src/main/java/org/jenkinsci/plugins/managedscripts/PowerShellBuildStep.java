@@ -21,6 +21,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.plugins.configfiles.ConfigFiles;
 import hudson.FilePath;
 import hudson.tasks.CommandInterpreter;
 
@@ -122,7 +123,7 @@ public class PowerShellBuildStep extends CommandInterpreter {
         if(executor!=null) {
             Queue.Executable currentExecutable = executor.getCurrentExecutable();
             if(currentExecutable != null) {
-                Config buildStepConfig = Config.getByIdOrNull((Run<?, ?>) currentExecutable, getBuildStepId());
+                Config buildStepConfig = ConfigFiles.getByIdOrNull((Run<?, ?>) currentExecutable, getBuildStepId());
                 if (buildStepConfig == null) {
                     throw new IllegalStateException(Messages.config_does_not_exist(getBuildStepId()));
                 }
@@ -182,7 +183,7 @@ public class PowerShellBuildStep extends CommandInterpreter {
          */
         @JavaScriptMethod
         public String getArgsDescription(@AncestorInPath ItemGroup context, String configId) {
-            final PowerShellConfig config = Config.getByIdOrNull(context, configId);
+            final PowerShellConfig config = ConfigFiles.getByIdOrNull(context, configId);
             if (config != null) {
                 if (config.args != null && !config.args.isEmpty()) {
                     StringBuilder sb = new StringBuilder("Required arguments: ");
@@ -204,7 +205,7 @@ public class PowerShellBuildStep extends CommandInterpreter {
 
         @JavaScriptMethod
         public List<Arg> getArgs(@AncestorInPath ItemGroup context, String configId) {
-            final PowerShellConfig config = Config.getByIdOrNull(context, configId);
+            final PowerShellConfig config = ConfigFiles.getByIdOrNull(context, configId);
             if (config != null) {
                 return config.args;
             }
@@ -218,7 +219,7 @@ public class PowerShellBuildStep extends CommandInterpreter {
          * @return
          */
         public FormValidation doCheckBuildStepId(@AncestorInPath ItemGroup context, @QueryParameter String buildStepId) {
-            final PowerShellConfig config = Config.getByIdOrNull(context, buildStepId);
+            final PowerShellConfig config = ConfigFiles.getByIdOrNull(context, buildStepId);
             if (config != null) {
                 return FormValidation.ok();
             } else {
@@ -232,7 +233,7 @@ public class PowerShellBuildStep extends CommandInterpreter {
          * @return A collection of batch files of type {@link WinBatchConfig}.
          */
         public ListBoxModel doFillBuildStepIdItems(@AncestorInPath ItemGroup context) {
-            List<Config> configsInContext = Config.getConfigsInContext(context, PowerShellConfig.PowerShellConfigProvider.class);
+            List<Config> configsInContext = ConfigFiles.getConfigsInContext(context, PowerShellConfig.PowerShellConfigProvider.class);
             Collections.sort(configsInContext, new Comparator<Config>() {
                 public int compare(Config o1, Config o2) {
                     return o1.name.compareTo(o2.name);

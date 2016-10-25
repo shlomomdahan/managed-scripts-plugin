@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 import hudson.util.ListBoxModel;
 import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.plugins.configfiles.ConfigFiles;
 import org.jenkinsci.plugins.managedscripts.WinBatchConfig.Arg;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -119,21 +120,21 @@ public class WinBatchBuildStep extends CommandInterpreter {
     protected String getContents() {
 
         Executor executor = Executor.currentExecutor();
-        if(executor!=null) {
+        if (executor != null) {
             Queue.Executable currentExecutable = executor.getCurrentExecutable();
-            if(currentExecutable != null) {
-                Config buildStepConfig = Config.getByIdOrNull((Run<?, ?>) currentExecutable, getBuildStepId());
+            if (currentExecutable != null) {
+                Config buildStepConfig = ConfigFiles.getByIdOrNull((Run<?, ?>) currentExecutable, getBuildStepId());
                 if (buildStepConfig == null) {
                     throw new IllegalStateException(Messages.config_does_not_exist(getBuildStepId()));
                 }
                 return buildStepConfig.content + "\r\nexit %ERRORLEVEL%";
             } else {
-                String msg = "current executable not accessable! can't get content of script: "+getBuildStepId();
+                String msg = "current executable not accessable! can't get content of script: " + getBuildStepId();
                 LOGGER.log(Level.SEVERE, msg);
                 throw new RuntimeException(msg);
             }
         } else {
-            String msg = "current executor not accessable! can't get content of script: "+getBuildStepId();
+            String msg = "current executor not accessable! can't get content of script: " + getBuildStepId();
             LOGGER.log(Level.SEVERE, msg);
             throw new RuntimeException(msg);
         }
@@ -180,7 +181,7 @@ public class WinBatchBuildStep extends CommandInterpreter {
          * @return A collection of batch files of type {@link WinBatchConfig}.
          */
         public ListBoxModel doFillBuildStepIdItems(@AncestorInPath ItemGroup context) {
-            List<Config> configsInContext = Config.getConfigsInContext(context, WinBatchConfig.WinBatchConfigProvider.class);
+            List<Config> configsInContext = ConfigFiles.getConfigsInContext(context, WinBatchConfig.WinBatchConfigProvider.class);
             Collections.sort(configsInContext, new Comparator<Config>() {
                 public int compare(Config o1, Config o2) {
                     return o1.name.compareTo(o2.name);
@@ -202,7 +203,7 @@ public class WinBatchBuildStep extends CommandInterpreter {
          */
         @JavaScriptMethod
         public String getArgsDescription(@AncestorInPath ItemGroup context, String configId) {
-            final WinBatchConfig config = Config.getByIdOrNull(context, configId);
+            final WinBatchConfig config = ConfigFiles.getByIdOrNull(context, configId);
             if (config != null) {
                 if (config.args != null && !config.args.isEmpty()) {
                     StringBuilder sb = new StringBuilder("Required arguments: ");
@@ -224,7 +225,7 @@ public class WinBatchBuildStep extends CommandInterpreter {
 
         @JavaScriptMethod
         public List<Arg> getArgs(@AncestorInPath ItemGroup context, String configId) {
-            final WinBatchConfig config = Config.getByIdOrNull(context, configId);
+            final WinBatchConfig config = ConfigFiles.getByIdOrNull(context, configId);
             return config.args;
         }
 
@@ -235,7 +236,7 @@ public class WinBatchBuildStep extends CommandInterpreter {
          * @return
          */
         public FormValidation doCheckBuildStepId(@AncestorInPath ItemGroup context, @QueryParameter String buildStepId) {
-            final WinBatchConfig config = Config.getByIdOrNull(context, buildStepId);
+            final WinBatchConfig config = ConfigFiles.getByIdOrNull(context, buildStepId);
             if (config != null) {
                 return FormValidation.ok();
             } else {

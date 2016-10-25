@@ -21,6 +21,7 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
 import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.plugins.configfiles.ConfigFiles;
 import org.jenkinsci.plugins.managedscripts.ScriptConfig.Arg;
 import org.jenkinsci.plugins.managedscripts.ScriptConfig.ScriptConfigProvider;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
@@ -117,7 +118,7 @@ public class ScriptBuildStep extends Builder {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         boolean returnValue = true;
-        Config buildStepConfig = Config.getByIdOrNull(build, buildStepId);
+        Config buildStepConfig = ConfigFiles.getByIdOrNull(build, buildStepId);
         if (buildStepConfig == null) {
             listener.getLogger().println(Messages.config_does_not_exist(buildStepId));
             return false;
@@ -239,7 +240,7 @@ public class ScriptBuildStep extends Builder {
          * @return A collection of config files of type {@link ScriptConfig}.
          */
         public ListBoxModel doFillBuildStepIdItems(@AncestorInPath ItemGroup context) {
-            List<Config> configsInContext = Config.getConfigsInContext(context, ScriptConfigProvider.class);
+            List<Config> configsInContext = ConfigFiles.getConfigsInContext(context, ScriptConfigProvider.class);
             Collections.sort(configsInContext, new Comparator<Config>() {
                 public int compare(Config o1, Config o2) {
                     return o1.name.compareTo(o2.name);
@@ -264,7 +265,7 @@ public class ScriptBuildStep extends Builder {
          */
         @JavaScriptMethod
         public String getArgsDescription(@AncestorInPath ItemGroup context, String configId) {
-            final ScriptConfig config = Config.getByIdOrNull(context, configId);
+            final ScriptConfig config = ConfigFiles.getByIdOrNull(context, configId);
             if (config != null) {
                 if (config.args != null && !config.args.isEmpty()) {
                     StringBuilder sb = new StringBuilder("Required arguments: ");
@@ -286,7 +287,7 @@ public class ScriptBuildStep extends Builder {
 
         @JavaScriptMethod
         public List<Arg> getArgs(@AncestorInPath ItemGroup context, String configId) {
-            final ScriptConfig config = Config.getByIdOrNull(context, configId);
+            final ScriptConfig config = ConfigFiles.getByIdOrNull(context, configId);
             if (config != null) {
                 return config.args;
             }
@@ -301,7 +302,7 @@ public class ScriptBuildStep extends Builder {
          * @return whether the config existts or not
          */
         public FormValidation doCheckBuildStepId(@AncestorInPath ItemGroup context, @QueryParameter String buildStepId) {
-            final ScriptConfig config = Config.getByIdOrNull(context, buildStepId);
+            final ScriptConfig config = ConfigFiles.getByIdOrNull(context, buildStepId);
             if (config != null) {
                 return FormValidation.ok();
             } else {
