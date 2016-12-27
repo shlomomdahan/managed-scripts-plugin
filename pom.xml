@@ -10,7 +10,7 @@
 
     <groupId>org.jenkinsci.plugins</groupId>
     <artifactId>managed-scripts</artifactId>
-    <version>1.3</version>
+    <version>1.4-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Managed Scripts</name>
     <description>Managed scripts are shell script which are managed centrally by an administrator and can be referenced as a build step within jobs.</description>
@@ -26,7 +26,7 @@
         <connection>scm:git:git://github.com/jenkinsci/managed-scripts-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/managed-scripts-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/managed-scripts-plugin</url>
-      <tag>managed-scripts-1.3</tag>
+      <tag>HEAD</tag>
     </scm>
     <distributionManagement>
         <repository>
