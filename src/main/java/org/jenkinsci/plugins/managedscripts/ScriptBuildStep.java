@@ -1,25 +1,14 @@
 package org.jenkinsci.plugins.managedscripts;
 
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
-import hudson.Util;
+import hudson.*;
 import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.tasks.Shell;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.FormValidation;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
-
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.ConfigFiles;
 import org.jenkinsci.plugins.managedscripts.ScriptConfig.Arg;
@@ -27,8 +16,14 @@ import org.jenkinsci.plugins.managedscripts.ScriptConfig.ScriptConfigProvider;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.bind.JavaScriptMethod;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * LibraryBuildStep {@link Builder}.
@@ -256,15 +251,13 @@ public class ScriptBuildStep extends Builder {
         }
 
 
-
         /**
          * gets the argument description to be displayed on the screen when selecting a config in the dropdown
          *
          * @param configId the config id to get the arguments description for
          * @return the description
          */
-        @JavaScriptMethod
-        public String getArgsDescription(@AncestorInPath ItemGroup context, String configId) {
+        private String getArgsDescription(@AncestorInPath ItemGroup context, String configId) {
             final ScriptConfig config = ConfigFiles.getByIdOrNull(context, configId);
             if (config != null) {
                 if (config.args != null && !config.args.isEmpty()) {
@@ -282,7 +275,7 @@ public class ScriptBuildStep extends Builder {
                     return "No arguments required";
                 }
             }
-            return "please select a script!";
+            return "please select a valid script!";
         }
 
         @JavaScriptMethod
@@ -304,7 +297,7 @@ public class ScriptBuildStep extends Builder {
         public FormValidation doCheckBuildStepId(@AncestorInPath ItemGroup context, @QueryParameter String buildStepId) {
             final ScriptConfig config = ConfigFiles.getByIdOrNull(context, buildStepId);
             if (config != null) {
-                return FormValidation.ok();
+                return FormValidation.ok(getArgsDescription(context, buildStepId));
             } else {
                 return FormValidation.error("you must select a valid script");
             }

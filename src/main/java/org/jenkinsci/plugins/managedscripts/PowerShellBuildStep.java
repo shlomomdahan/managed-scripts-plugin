@@ -181,8 +181,7 @@ public class PowerShellBuildStep extends CommandInterpreter {
          * @param configId the config id to get the arguments description for
          * @return the description
          */
-        @JavaScriptMethod
-        public String getArgsDescription(@AncestorInPath ItemGroup context, String configId) {
+        private String getArgsDescription(@AncestorInPath ItemGroup context, String configId) {
             final PowerShellConfig config = ConfigFiles.getByIdOrNull(context, configId);
             if (config != null) {
                 if (config.args != null && !config.args.isEmpty()) {
@@ -200,7 +199,7 @@ public class PowerShellBuildStep extends CommandInterpreter {
                     return "No arguments required";
                 }
             }
-            return "please select a script!";
+            return "please select a valid script!";
         }
 
         @JavaScriptMethod
@@ -221,7 +220,7 @@ public class PowerShellBuildStep extends CommandInterpreter {
         public FormValidation doCheckBuildStepId(@AncestorInPath ItemGroup context, @QueryParameter String buildStepId) {
             final PowerShellConfig config = ConfigFiles.getByIdOrNull(context, buildStepId);
             if (config != null) {
-                return FormValidation.ok();
+                return FormValidation.ok(getArgsDescription(context, buildStepId));
             } else {
                 return FormValidation.error("you must select a valid powershell file");
             }
