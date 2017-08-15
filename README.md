@@ -7,6 +7,6 @@ see the [wiki](https://wiki.jenkins-ci.org/display/JENKINS/Managed+Script+Plugin
 
 #### builds are currently executed on:
 
-* [jenkins ci, azure - blueocean](https://ci.jenkins.io/blue/organizations/jenkins/Plugins%2Fmanaged-scripts-plugin/)
+* [jenkins ci](https://ci.jenkins.io/blue/organizations/jenkins/Plugins%2Fmanaged-scripts-plugin/)
 
 
