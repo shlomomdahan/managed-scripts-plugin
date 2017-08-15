@@ -14,11 +14,7 @@ import org.jenkinsci.plugins.configfiles.ConfigFiles;
 import org.jenkinsci.plugins.managedscripts.ScriptConfig.Arg;
 import org.jenkinsci.plugins.managedscripts.ScriptConfig.ScriptConfigProvider;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.HttpResponse;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.bind.JavaScriptMethod;
+import org.kohsuke.stapler.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -76,7 +72,7 @@ public class ScriptBuildStep extends Builder {
         this.buildStepId = buildStepId;
         this.tokenized = scriptBuildStepArgs != null ? scriptBuildStepArgs.tokenized : false;
         List<String> l = null;
-        if (scriptBuildStepArgs != null && scriptBuildStepArgs.defineArgs && scriptBuildStepArgs.buildStepArgs != null){
+        if (scriptBuildStepArgs != null && scriptBuildStepArgs.defineArgs && scriptBuildStepArgs.buildStepArgs != null) {
             l = new ArrayList<String>();
             for (ArgValue arg : scriptBuildStepArgs.buildStepArgs) {
                 l.add(arg.arg);
@@ -125,12 +121,12 @@ public class ScriptBuildStep extends Builder {
             EnvVars env = build.getEnvironment(listener);
             String data = buildStepConfig.content;
 
-            if(workingDir != null) {
+            if (workingDir != null) {
                 /*
                  * Copying temporary file to remote execution host
                  */
-                    dest = workingDir.createTextTempFile("build_step_template", ".sh", data, false);
-                    LOGGER.log(Level.FINE, "Wrote script to " + Computer.currentComputer().getDisplayName() + ":" + dest.getRemote());
+                dest = workingDir.createTextTempFile("build_step_template", ".sh", data, false);
+                LOGGER.log(Level.FINE, "Wrote script to " + Computer.currentComputer().getDisplayName() + ":" + dest.getRemote());
 
                 /*
                  * Analyze interpreter line (and use the desired interpreter)
@@ -257,7 +253,7 @@ public class ScriptBuildStep extends Builder {
          * @param configId the config id to get the arguments description for
          * @return the description
          */
-        private String getArgsDescription(@AncestorInPath ItemGroup context, String configId) {
+        private String getArgsDescription(@AncestorInPath Item context, String configId) {
             final ScriptConfig config = ConfigFiles.getByIdOrNull(context, configId);
             if (config != null) {
                 if (config.args != null && !config.args.isEmpty()) {
@@ -278,15 +274,6 @@ public class ScriptBuildStep extends Builder {
             return "please select a valid script!";
         }
 
-        @JavaScriptMethod
-        public List<Arg> getArgs(@AncestorInPath ItemGroup context, String configId) {
-            final ScriptConfig config = ConfigFiles.getByIdOrNull(context, configId);
-            if (config != null) {
-                return config.args;
-            }
-            return Collections.emptyList();
-        }
-
         /**
          * validate that an existing config was chosen
          *
@@ -294,10 +281,10 @@ public class ScriptBuildStep extends Builder {
          * @param buildStepId the buildStepId
          * @return whether the config existts or not
          */
-        public FormValidation doCheckBuildStepId(@AncestorInPath ItemGroup context, @QueryParameter String buildStepId) {
+        public HttpResponse doCheckBuildStepId(StaplerRequest req, @AncestorInPath Item context, @QueryParameter String buildStepId) {
             final ScriptConfig config = ConfigFiles.getByIdOrNull(context, buildStepId);
             if (config != null) {
-                return FormValidation.ok(getArgsDescription(context, buildStepId));
+                return DetailLinkDescription.getDescription(req, context, buildStepId, getArgsDescription(context, buildStepId));
             } else {
                 return FormValidation.error("you must select a valid script");
             }

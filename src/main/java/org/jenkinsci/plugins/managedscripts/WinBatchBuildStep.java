@@ -1,26 +1,24 @@
 package org.jenkinsci.plugins.managedscripts;
 
-import hudson.*;
+import hudson.Extension;
+import hudson.ExtensionList;
+import hudson.FilePath;
 import hudson.model.*;
 import hudson.model.Queue;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.tasks.CommandInterpreter;
 import hudson.util.FormValidation;
-
-import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import hudson.util.ListBoxModel;
 import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.ConfigFiles;
 import org.jenkinsci.plugins.managedscripts.WinBatchConfig.Arg;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.bind.JavaScriptMethod;
+import org.kohsuke.stapler.*;
+
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * A project that uses this builder can choose a build step from a list of predefined windows batch files that are used as command line scripts.
@@ -201,7 +199,7 @@ public class WinBatchBuildStep extends CommandInterpreter {
          * @param configId the config id to get the arguments description for
          * @return the description
          */
-        private String getArgsDescription(@AncestorInPath ItemGroup context, String configId) {
+        private String getArgsDescription(@AncestorInPath Item context, String configId) {
             final WinBatchConfig config = ConfigFiles.getByIdOrNull(context, configId);
             if (config != null) {
                 if (config.args != null && !config.args.isEmpty()) {
@@ -222,22 +220,16 @@ public class WinBatchBuildStep extends CommandInterpreter {
             return "please select a valid script!";
         }
 
-        @JavaScriptMethod
-        public List<Arg> getArgs(@AncestorInPath ItemGroup context, String configId) {
-            final WinBatchConfig config = ConfigFiles.getByIdOrNull(context, configId);
-            return config.args;
-        }
-
         /**
          * validate that an existing config was chosen
          *
          * @param buildStepId the buildStepId
          * @return
          */
-        public FormValidation doCheckBuildStepId(@AncestorInPath ItemGroup context, @QueryParameter String buildStepId) {
+        public HttpResponse doCheckBuildStepId(StaplerRequest req, @AncestorInPath Item context, @QueryParameter String buildStepId) {
             final WinBatchConfig config = ConfigFiles.getByIdOrNull(context, buildStepId);
             if (config != null) {
-                return FormValidation.ok(getArgsDescription(context, buildStepId));
+                return DetailLinkDescription.getDescription(req, context, buildStepId, getArgsDescription(context, buildStepId));
             } else {
                 return FormValidation.error("you must select a valid batch file");
             }

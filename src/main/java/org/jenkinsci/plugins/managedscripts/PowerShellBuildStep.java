@@ -1,29 +1,26 @@
 package org.jenkinsci.plugins.managedscripts;
 
-import hudson.model.*;
-import hudson.model.Queue;
-import hudson.util.ListBoxModel;
-import org.jenkinsci.plugins.managedscripts.PowerShellConfig.Arg;
 import hudson.Extension;
 import hudson.ExtensionList;
+import hudson.FilePath;
+import hudson.model.*;
+import hudson.model.Queue;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import hudson.tasks.CommandInterpreter;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import org.jenkinsci.lib.configprovider.ConfigProvider;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.QueryParameter;
+import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.plugins.configfiles.ConfigFiles;
+import org.jenkinsci.plugins.managedscripts.PowerShellConfig.Arg;
+import org.kohsuke.stapler.*;
 import org.kohsuke.stapler.bind.JavaScriptMethod;
-import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.Serializable;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.jenkinsci.lib.configprovider.model.Config;
-import org.jenkinsci.plugins.configfiles.ConfigFiles;
-import hudson.FilePath;
-import hudson.tasks.CommandInterpreter;
 
 /**
  * A project that uses this builder can choose a build step from a list of predefined powershell files that are used as command line scripts.
@@ -120,21 +117,21 @@ public class PowerShellBuildStep extends CommandInterpreter {
     protected String getContents() {
 
         Executor executor = Executor.currentExecutor();
-        if(executor!=null) {
+        if (executor != null) {
             Queue.Executable currentExecutable = executor.getCurrentExecutable();
-            if(currentExecutable != null) {
+            if (currentExecutable != null) {
                 Config buildStepConfig = ConfigFiles.getByIdOrNull((Run<?, ?>) currentExecutable, getBuildStepId());
                 if (buildStepConfig == null) {
                     throw new IllegalStateException(Messages.config_does_not_exist(getBuildStepId()));
                 }
                 return buildStepConfig.content + "\r\nexit $LastExitCode";
             } else {
-                String msg = "current executable not accessable! can't get content of script: "+getBuildStepId();
+                String msg = "current executable not accessable! can't get content of script: " + getBuildStepId();
                 LOGGER.log(Level.SEVERE, msg);
                 throw new RuntimeException(msg);
             }
         } else {
-            String msg = "current executor not accessable! can't get content of script: "+getBuildStepId();
+            String msg = "current executor not accessable! can't get content of script: " + getBuildStepId();
             LOGGER.log(Level.SEVERE, msg);
             throw new RuntimeException(msg);
         }
@@ -181,7 +178,7 @@ public class PowerShellBuildStep extends CommandInterpreter {
          * @param configId the config id to get the arguments description for
          * @return the description
          */
-        private String getArgsDescription(@AncestorInPath ItemGroup context, String configId) {
+        private String getArgsDescription(@AncestorInPath Item context, String configId) {
             final PowerShellConfig config = ConfigFiles.getByIdOrNull(context, configId);
             if (config != null) {
                 if (config.args != null && !config.args.isEmpty()) {
@@ -202,25 +199,16 @@ public class PowerShellBuildStep extends CommandInterpreter {
             return "please select a valid script!";
         }
 
-        @JavaScriptMethod
-        public List<Arg> getArgs(@AncestorInPath ItemGroup context, String configId) {
-            final PowerShellConfig config = ConfigFiles.getByIdOrNull(context, configId);
-            if (config != null) {
-                return config.args;
-            }
-            return Collections.emptyList();
-        }
-
         /**
          * validate that an existing config was chosen
          *
          * @param buildStepId the buildStepId
          * @return
          */
-        public FormValidation doCheckBuildStepId(@AncestorInPath ItemGroup context, @QueryParameter String buildStepId) {
+        public HttpResponse doCheckBuildStepId(StaplerRequest req, @AncestorInPath Item context, @QueryParameter String buildStepId) {
             final PowerShellConfig config = ConfigFiles.getByIdOrNull(context, buildStepId);
             if (config != null) {
-                return FormValidation.ok(getArgsDescription(context, buildStepId));
+                return DetailLinkDescription.getDescription(req, context, buildStepId, getArgsDescription(context, buildStepId));
             } else {
                 return FormValidation.error("you must select a valid powershell file");
             }

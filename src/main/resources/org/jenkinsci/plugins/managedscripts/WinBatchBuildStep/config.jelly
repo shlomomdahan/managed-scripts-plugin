@@ -1,11 +1,5 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
-    <st:adjunct assumes="org.kohsuke.stapler.framework.prototype.prototype" includes="org.kohsuke.stapler.bind"/>
-    
-	<st:once>
-		<script type="text/javascript" src="${rootURL}/plugin/managed-scripts/js/managed-scripts.js" />
-	</st:once>
-
 	<f:entry title="${%Script}" field="buildStepContent">
 		<f:entry field="buildStepId">
 			<f:select />
@@ -37,27 +31,4 @@
 		</f:block>
 	</f:entry>
 
-	<st:bind var="desc" value="${descriptor}"/>
-	<st:once>
-		<script type="text/javascript">
-			function ms_updateDetailLink(event) {
-				fp_initDetailLink('<j:out value="${rootURL}" />', event.currentTarget, '_.buildStepId');
-			}
-
-			function ms_initAllDetailLinks() {
-                console.log('init win batch scripts...');
-				var all = new Array();
-				all = document.getElementsByName('_.buildStepId');
-                console.log('all...'+all);
-				for(var i = 0; i &lt; all.length; i++) {
-                    console.log('found: '+all.item(i));
-					fp_initDetailLink('<j:out value="${rootURL}" />', all.item(i), '_.buildStepId');
-					Event.stopObserving(all.item(i), 'change', ms_updateDetailLink);
-					Event.observe(all.item(i), 'change', ms_updateDetailLink);
-				}
-			}
-
-			Event.observe(window, 'load', ms_initAllDetailLinks);
-		</script>
-	</st:once>
 </j:jelly>
