@@ -9,7 +9,7 @@
 
 
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:ms="/lib/managed_scripts">
 
 	<f:entry title="${%ID}">
 		<f:textbox readonly="readonly" name="config.id" value="${config.id}" />
@@ -21,17 +21,17 @@
 		<f:textbox readonly="readonly" name="config.comment" value="${config.comment}" />
 	</f:entry>
 	<f:block>
-		<table>
+		<ms:blockWrapper>
 			<f:entry title="${%Argument list}" field="config.args">
 				<f:repeatable var="arg" items="${config.args}" name="args" noAddButton="true" minimum="1">
-					<table width="100%">
+					<ms:blockWrapper width="100%">
 						<f:entry>
 							<input type="text" readonly="readonly" name="name" value="${arg.name}" />
 						</f:entry>
-					</table>
+					</ms:blockWrapper>
 				</f:repeatable>
 			</f:entry>
-		</table>
+		</ms:blockWrapper>
 	</f:block>
 	<f:entry title="${%Content}">
 		<f:textarea readonly="readonly" id="config.content" name="config.content" value="${config.content}" />
