@@ -9,7 +9,7 @@ platforms['windows'] = {
     node('windows') {
         checkout scm
         withEnv([
-            "JAVA_HOME=${tool 'jdk7'}",
+            "JAVA_HOME=${tool 'jdk8'}",
             "PATH+MAVEN=${tool 'mvn'}/bin",
         ]) {
             bat mavenCommand
@@ -22,7 +22,7 @@ platforms['linux'] = {
     node('linux') {
         checkout scm
         withEnv([
-            "JAVA_HOME=${tool 'jdk7'}",
+            "JAVA_HOME=${tool 'jdk8'}",
             "PATH+MAVEN=${tool 'mvn'}/bin",
         ]) {
             sh mavenCommand
