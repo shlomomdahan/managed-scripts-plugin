@@ -26,7 +26,7 @@ THE SOFTWARE.
 
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
-	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:ms="/lib/managed_scripts">
 			   		
 			   		<p>
 			   		 ${%description}
@@ -35,19 +35,19 @@ THE SOFTWARE.
 					<j:set var="descriptor" value="${config.descriptor}"/>
 					<st:include page="id-name-and-comment"  class="${descriptor.clazz}"/>
 					<f:block>
-					  <table>
+					  <ms:blockWrapper>
 					      <f:entry title="${%Argument list}" field="config.args">
 								<f:repeatable var="arg" items="${config.args}" name="args" noAddButton="true" minimum="1">
-									<table width="100%">
+									<ms:blockWrapper width="100%">
 										<f:entry>
 											<input type="text" name="name" value="${arg.name}" size="40" />
 											<input type="button" name="delete_button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
 											<input type="button" name="add_button" value="${%Add argument}" class="repeatable-add show-if-last" />
 										</f:entry>
-									</table>
+									</ms:blockWrapper>
 								</f:repeatable>
 						</f:entry>
-					  </table>
+					  </ms:blockWrapper>
 					</f:block>					
 					<f:entry title="${%Content}">
 						<f:textarea id="config.content" name="config.content" value="${config.content}" /> 
