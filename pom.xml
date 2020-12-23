@@ -40,6 +40,10 @@
             <id>imod</id>
             <name>Dominik Bartholdi</name>
         </developer>
+        <developer>
+            <id>gbigenios</id>
+            <name>J White</name>
+        </developer>
     </developers>
 
     <dependencies>
