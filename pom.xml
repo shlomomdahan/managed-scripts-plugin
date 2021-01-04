@@ -22,7 +22,7 @@
         <jenkins.version>2.204</jenkins.version>
     </properties>
 
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/Managed+Script+Plugin</url>
+    <url>https://github.com/jenkinsci/managed-scripts-plugin</url>
     <scm>
         <connection>scm:git:git://github.com/jenkinsci/managed-scripts-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/managed-scripts-plugin.git</developerConnection>
