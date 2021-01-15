@@ -1,36 +1,21 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:ms="/lib/managed_scripts">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
-	<f:entry title="${%Script}" field="buildStepContent">
+    <f:entry title="${%Script}" field="buildStepId">
+        <f:select />
+    </f:entry>
 
-		<f:entry field="buildStepId">
-			<f:select />
-		</f:entry>
+    <a target="_blank" style="display:none;" href="" onclick="window.open(this.href,'window','width=900,height=640,resizable,scrollbars,toolbar,menubar') ;return false;">view selected script</a>
 
-		<tr><td></td>
-			<td></td>
-			<td><a target="_blank" name="showFileDetailLink" style="display:none;" href="" onclick="window.open(this.href,'window','width=900,height=640,resizable,scrollbars,toolbar,menubar') ;return false;">view selected script</a></td>
-			<td></td>
-		</tr>
-
-		<f:block>
-			<ms:blockWrapper name="scriptBuildStepArgs" id="scriptBuildStepArgs">
-				<f:optionalBlock name="defineArgs" inline="true" title="${%Define arguments}" checked="${!empty(instance.buildStepArgs)}" help="/plugin/managed-scripts/help-defineArgs_powershell.html">
-					<f:entry>
-						<f:repeatable var="arg" items="${instance.buildStepArgs}" name="buildStepArgs" noAddButton="true" minimum="1">
-							<ms:blockWrapper width="100%">
-								<f:entry>
-									<div name="argName"><st:nbsp/></div>
-									<input type="text" name="arg" value="${arg}" size="80"/>
-									<input type="button" name="delete_button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
-									<input type="button" name="add_button" onClick="ms_labelArgs()" value="${%Add argument}" class="repeatable-add show-if-last" />
-								</f:entry>
-							</ms:blockWrapper>
-						</f:repeatable>
-					</f:entry>
-				</f:optionalBlock>
-			</ms:blockWrapper>
-		</f:block>
-	</f:entry>
+    <f:optionalBlock name="defineArgs" inline="true" title="${%Define arguments}" checked="${!empty(instance.buildStepArgs)}" help="/plugin/managed-scripts/help-defineArgs_powershell.html">
+        <f:repeatable var="arg" items="${instance.buildStepArgs}" name="buildStepArgs" noAddButton="true" minimum="1">
+            <f:entry>
+                <div name="argName"><st:nbsp/></div>
+                <input type="text" name="arg" value="${arg}" size="80"/>
+                <input type="button" name="delete_button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
+                <input type="button" name="add_button" onClick="ms_labelArgs()" value="${%Add argument}" class="repeatable-add show-if-last" />
+            </f:entry>
+        </f:repeatable>
+    </f:optionalBlock>
 
 </j:jelly>

@@ -43,31 +43,20 @@ public class WinBatchBuildStep extends CommandInterpreter {
         }
     }
 
-    public static class ScriptBuildStepArgs {
-        public final boolean defineArgs;
-        public final ArgValue[] buildStepArgs;
-
-        @DataBoundConstructor
-        public ScriptBuildStepArgs(boolean defineArgs, ArgValue[] buildStepArgs) {
-            this.defineArgs = defineArgs;
-            this.buildStepArgs = buildStepArgs == null ? new ArgValue[0] : Arrays.copyOf(buildStepArgs, buildStepArgs.length);
-        }
-    }
-
     /**
      * The constructor used at form submission
      *
      * @param buildStepId         the Id of the config file
-     * @param scriptBuildStepArgs whether to save the args and arg values (the boolean is required because of html form submission, which also sends hidden values)
+     * @param defineArgs  required because of html form submission, which also sends hidden values
+     * @param buildStepArgs  arg values
      */
     @DataBoundConstructor
-    public WinBatchBuildStep(String buildStepId, ScriptBuildStepArgs scriptBuildStepArgs) {
+    public WinBatchBuildStep(String buildStepId, boolean defineArgs, ArgValue[] buildStepArgs) {
         super(buildStepId);
         List<String> l = null;
-        if (scriptBuildStepArgs != null && scriptBuildStepArgs.defineArgs
-                && scriptBuildStepArgs.buildStepArgs != null) {
+        if (defineArgs && buildStepArgs != null) {
             l = new ArrayList<String>();
-            for (ArgValue arg : scriptBuildStepArgs.buildStepArgs) {
+            for (ArgValue arg : buildStepArgs) {
                 l.add(arg.arg);
             }
         }
