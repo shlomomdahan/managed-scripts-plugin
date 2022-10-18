@@ -23,7 +23,7 @@
 
     <url>https://github.com/jenkinsci/managed-scripts-plugin</url>
     <scm>
-        <connection>scm:git:git://github.com/jenkinsci/managed-scripts-plugin.git</connection>
+        <connection>scm:git:https://github.com/jenkinsci/managed-scripts-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/managed-scripts-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/managed-scripts-plugin</url>
       <tag>HEAD</tag>
