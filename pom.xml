@@ -18,8 +18,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.javadoc.skip>true</maven.javadoc.skip>
-        <java.level>8</java.level>
-        <jenkins.version>2.277</jenkins.version>
+        <jenkins.version>2.319.3</jenkins.version>
     </properties>
 
     <url>https://github.com/jenkinsci/managed-scripts-plugin</url>
