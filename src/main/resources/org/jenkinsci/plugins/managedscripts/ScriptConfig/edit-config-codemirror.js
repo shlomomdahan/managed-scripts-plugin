@@ -5,7 +5,6 @@ document.onreadystatechange = function(){
     //      clearTimeout(pending);
     //      pending = setTimeout(update, 400);
     //  });
-    console.log("SHLOMO");
     function looksLike(code) {
         var firstline = code.split('\n')[0];
         if(firstline.indexOf('#!') == 0){
